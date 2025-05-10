@@ -83,41 +83,41 @@ class Entrega {
 
     static int exercici1(char[] ops, int[] vars) {
         int numVars = Arrays.stream(vars).max().getAsInt() + 1;
-        int numCombinations = 1 << numVars;
+        int numCombinacions = 1 << numVars;
 
-        boolean alwaysTrue = true;
-        boolean alwaysFalse = true;
+        boolean esTautologia = true;
+        boolean esContradiccio = true;
 
-        for (int mask = 0; mask < numCombinations; mask++) {
-          boolean[] values = new boolean[numVars];
+        for (int j = 0; j < numCombinacions; j++) {
+          boolean[] valors = new boolean[numVars];
           for (int i = 0; i < numVars; i++) {
-            values[i] = ((mask >> i) & 1) == 1;
+            valors[i] = ((j >> i) & 1) == 1;
           }
 
-          boolean result = values[vars[0]];
+          boolean resultat = valors[vars[0]];
           for (int i = 0; i < ops.length; i++) {
-            boolean next = values[vars[i + 1]];
-            result = applyOp(result, next, ops[i]);
+            boolean next = valors[vars[i + 1]];
+            resultat = aplicarOp(resultat, next, ops[i]);
           }
 
-          if (result) {
-            alwaysFalse = false;
+          if (resultat) {
+            esContradiccio = false;
           } else {
-            alwaysTrue = false;
+            esTautologia = false;
           }
         }
 
-        if (alwaysTrue) return 1;
-        if (alwaysFalse) return 0;
+        if (esTautologia) return 1;
+        if (esContradiccio) return 0;
         return -1;
     }
-    private static boolean applyOp(boolean a, boolean b, char op) {
+    private static boolean aplicarOp(boolean a, boolean b, char op) {
       switch (op) {
         case '∧': return a && b;
         case '∨': return a || b;
         case '→': return !a || b;
         case '.': return !(a && b); // NAND
-        default: throw new IllegalArgumentException("Unknown operator: " + op);
+        default: throw new IllegalArgumentException("Operador desconegut: " + op);
       }
     }
     /*
@@ -131,23 +131,23 @@ class Entrega {
      * (∀x : P(x)) <-> (∃!x : Q(x))
      */
     static boolean exercici2(int[] universe, Predicate<Integer> p, Predicate<Integer> q) {
-        boolean allP = true;
+        boolean totP = true;
         for (int x : universe) {
           if (!p.test(x)) {
-            allP = false;
+            totP = false;
             break;
           }
         }
 
-        int countQ = 0;
+        int contadorQ = 0;
         for (int x : universe) {
           if (q.test(x)) {
-            countQ++;
+            contadorQ++;
           }
         }
 
-        boolean existsExactlyOneQ = countQ == 1;
-        return allP == existsExactlyOneQ;
+        boolean existseixExactamentUnaQ = contadorQ == 1;
+        return totP == existseixExactamentUnaQ;
     }
 
     static void tests() {
