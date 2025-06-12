@@ -51,6 +51,12 @@ import java.util.stream.IntStream;
 class Entrega {
   static final String[] NOMS = {};
 
+
+
+
+
+
+
   /*
    * Aquí teniu els exercicis del Tema 1 (Lògica).
    */
@@ -78,8 +84,58 @@ class Entrega {
     static final char IMPL = '→';
     static final char NAND = '.';
 
-    static int exercici1(char[] ops, int[] vars) {
-      throw new UnsupportedOperationException("pendent");
+    static int exercici1(char[] ops, int[] vars)
+    {
+      int numVars = Arrays.stream(vars).max().getAsInt() + 1;
+
+      int numCombinacions = 1 << numVars;
+
+      boolean esTautologia = true;
+      boolean esContradiccio = true;
+
+      for (int j = 0; j < numCombinacions; j++)
+      {
+        boolean[] valors = new boolean[numVars];
+
+        for (int i = 0; i < numVars; i++)
+        {
+          valors[i] = ((j >> i) & 1) == 1;
+        }
+
+        boolean resultat = valors[vars[0]];
+
+        for (int i = 0; i < ops.length; i++)
+        {
+          boolean next = valors[vars[i + 1]];
+          resultat = aplicarOp(resultat, next, ops[i]);
+        }
+
+        if (resultat)
+        {
+          esContradiccio = false;
+        }
+        else
+        {
+          esTautologia = false;
+        }
+
+      }
+
+      if (esTautologia) return 1;
+      if (esContradiccio) return 0;
+      return -1;
+    }
+
+    public static boolean aplicarOp(boolean a, boolean b, char op)
+    {
+      switch (op)
+      {
+        case CONJ: return a && b;
+        case DISJ: return a || b;
+        case IMPL: return !a || b;
+        case NAND: return !(a && b);
+        default:   throw new IllegalArgumentException("Operador desconegut: "+op);
+      }
     }
 
     /*
@@ -92,8 +148,30 @@ class Entrega {
      *
      * (∀x : P(x)) <-> (∃!x : Q(x))
      */
-    static boolean exercici2(int[] universe, Predicate<Integer> p, Predicate<Integer> q) {
-      throw new UnsupportedOperationException("pendent");
+    static boolean exercici2(int[] universe, Predicate<Integer> p, Predicate<Integer> q)
+    {
+      boolean totP = true;
+
+      for (int x : universe)
+      {
+        if (!p.test(x))
+        {
+          totP = false;
+          break;
+        }
+      }
+
+      int contadorQ = 0;
+      for (int x : universe)
+      {
+        if (q.test(x))
+        {
+          contadorQ++;
+        }
+      }
+
+      boolean existeExactamenteUnaQ = contadorQ == 1;
+      return totP == existeExactamenteUnaQ;
     }
 
     static void tests() {
@@ -118,6 +196,21 @@ class Entrega {
       });
     }
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   /*
    * Aquí teniu els exercicis del Tema 2 (Conjunts).
@@ -146,8 +239,33 @@ class Entrega {
      *
      * Pista: Cercau informació sobre els nombres de Stirling.
      */
-    static int exercici1(int[] a) {
-      throw new UnsupportedOperationException("pendent");
+    static int exercici1(int[] a)
+    {
+      int n = a.length;
+
+      // crear tabla para los números de Stirling de segundo tipo
+      int [][] stirling = new int[n+1][n+1];
+
+      // caso base
+      stirling[0][0] = 1;
+
+      // ampliar la tabla con recurrencia
+      for (int i = 1; i <= n; i++)
+      {
+        for (int j = 1; j <= i; j++)
+        {
+          stirling[i][j] = j*stirling[i-1][j] + stirling[i-1][j-1];
+        }
+      }
+
+      // calcular número de Bell B(n)
+      int bell = 0;
+      for (int k = 0; k <= n; k++)
+      {
+        bell += stirling[n][k];
+      }
+
+      return bell;
     }
 
     /*
@@ -157,8 +275,67 @@ class Entrega {
      *
      * Si no existeix, retornau -1.
      */
-    static int exercici2(int[] a, int[][] rel) {
-      throw new UnsupportedOperationException("pendent");
+    static int exercici2(int[] a, int[][] rel)
+    {
+      int n = a.length;
+      boolean[][] mat = new boolean[n][n];
+
+      // Afegim parelles inicials
+      for (int[] pair : rel)
+      {
+        int x = Arrays.binarySearch(a, pair[0]);
+        int y = Arrays.binarySearch(a, pair[1]);
+
+        if (x >= 0 && y >= 0)
+        {
+          mat[x][y] = true;
+        }
+      }
+
+      // Reflexivitat
+      for (int i = 0; i < n; i++)
+      {
+        mat[i][i] = true;
+      }
+
+      // Clausura transitiva (Floyd-Warshall)
+      for (int k = 0; k < n; k++)
+      {
+        for (int i = 0; i < n; i++)
+        {
+          for (int j = 0; j < n; j++)
+          {
+            if (mat[i][k] && mat[k][j])
+            {
+              mat[i][j] = true;
+            }
+          }
+        }
+      }
+
+      // Comprovació d'antisimetria
+      for (int i = 0; i < n; i++)
+      {
+        for (int j = 0; j < n; j++)
+        {
+          if (i != j && mat[i][j] && mat[j][i])
+          {
+            return -1;
+          }
+        }
+      }
+
+      // Comptar cardinal de la relació final
+      int contador = 0;
+      for (int i = 0; i < n; i++)
+      {
+        for (int j = 0; j < n; j++)
+        {
+          if (mat[i][j]) contador++;
+        }
+      }
+
+      return contador;
     }
 
     /*
@@ -168,8 +345,93 @@ class Entrega {
      * - El suprem de `x` si existeix i `op` és true
      * - null en qualsevol altre cas
      */
-    static Integer exercici3(int[] a, int[][] rel, int[] x, boolean op) {
-      throw new UnsupportedOperationException("pendent");
+    static Integer exercici3(int[] a, int[][] rel, int[] x, boolean op)
+    {
+      int n = a.length;
+      boolean[][] mat = new boolean[n][n];
+
+      // Construir matriu de relació
+      for (int[] pair : rel)
+      {
+        int i = Arrays.binarySearch(a, pair[0]);
+        int j = Arrays.binarySearch(a, pair[1]);
+
+        if (i >= 0 && j >= 0)
+        {
+          mat[i][j] = true;
+        }
+      }
+
+      // Clausura transitiva + reflexiva
+      for (int i = 0; i < n; i++) mat[i][i] = true;
+
+      for (int k = 0; k < n; k++)
+      {
+        for (int i = 0; i < n; i++)
+        {
+          for (int j = 0; j < n; j++)
+          {
+            if (mat[i][k] && mat[k][j]) mat[i][j] = true;
+          }
+        }
+      }
+
+      // Marcar índexs dels elements de x
+      List<Integer> xIdx = new ArrayList<>();
+
+      for (int xi : x)
+      {
+        int idx = Arrays.binarySearch(a, xi);
+        if (idx >= 0) xIdx.add(idx);
+      }
+
+      List<Integer> candidats = new ArrayList<>();
+
+      for (int i = 0; i < n; i++)
+      {
+        boolean valid = true;
+        for (int xi : xIdx)
+        {
+          if (op) // SUPREM: a[xi] <= a[i]
+          {
+            if (!mat[xi][i])
+            {
+              valid = false;
+              break;
+            }
+
+          }
+          else // ÍNFIM: a[i] <= a[xi]
+          {
+            if (!mat[i][xi])
+            {
+              valid = false;
+              break;
+            }
+          }
+        }
+
+        if (valid) candidats.add(i);
+      }
+
+      if (candidats.isEmpty()) return null;
+
+      // Trobar el mínim (suprem) o màxim (ínfim) entre els candidats
+      int millor = candidats.get(0);
+
+      for (int i : candidats)
+      {
+        if (op)
+        { // Suprem → volem el més petit
+          if (mat[i][millor] && i != millor) millor = i;
+        }
+        else
+        { // Ínfim → volem el més gran
+          if (mat[millor][i] && i != millor) millor = i;
+        }
+      }
+
+      return a[millor];
     }
 
     /*
@@ -179,8 +441,119 @@ class Entrega {
      *  - Sinó, el graf d'una inversa seva per la dreta (si existeix)
      *  - Sinó, null.
      */
-    static int[][] exercici4(int[] a, int[] b, Function<Integer, Integer> f) {
-      throw new UnsupportedOperationException("pendent");
+    static int[][] exercici4(int[] a, int[] b, Function<Integer, Integer> f)
+    {
+      int n = a.length;
+      int[][] graf = new int[n][2];  // Per guardar parells (f(x), x)
+      int[] imatges = new int[n];    // Per guardar f(x)
+      int imatgesCount = 0;
+      boolean injectiva = true;
+
+      // Construim graf i comprovam injectivitat
+      for (int i = 0; i < n; i++)
+      {
+        int x = a[i];
+        int y = f.apply(x);
+
+        // Comprovar si y ja s'ha vist abans → no injectiva
+        for (int j = 0; j < imatgesCount; j++)
+        {
+          if (imatges[j] == y)
+          {
+            injectiva = false;
+            break;
+          }
+        }
+
+        imatges[imatgesCount++] = y;
+        graf[i][0] = y;
+        graf[i][1] = x;
+      }
+
+      // Comprovar surjectivitat: cada b[i] ha d'aparèixer a imatges[]
+      boolean surjectiva = true;
+
+      for (int i = 0; i < b.length; i++)
+      {
+        boolean trobat = false;
+
+        for (int j = 0; j < imatgesCount; j++)
+        {
+          if (b[i] == imatges[j])
+          {
+            trobat = true;
+            break;
+          }
+        }
+
+
+        if (!trobat)
+        {
+          surjectiva = false;
+          break;
+        }
+      }
+
+      if (injectiva && surjectiva)
+      {
+        // Inversa completa → retornem graf ordenat
+        ordenarGraf(graf);
+        return graf;
+      }
+      else if (injectiva)
+      {
+        ordenarGraf(graf);
+        return graf;
+      }
+      else if (surjectiva)
+      {
+        // Inversa per la dreta: cercam un x tal que f(x) = y per cada y ∈ b
+        int[][] resultat = new int[b.length][2];
+        int count = 0;
+
+        for (int i = 0; i < b.length; i++)
+        {
+          int y = b[i];
+
+          for (int j = 0; j < a.length; j++)
+          {
+            int x = a[j];
+
+            if (f.apply(x) == y)
+            {
+              resultat[count][0] = y;
+              resultat[count][1] = x;
+              count++;
+              break;
+            }
+          }
+        }
+
+        ordenarGraf(resultat);
+        return resultat;
+      }
+
+      // Cap inversa possible
+      return null;
+    }
+
+    static void ordenarGraf(int[][] graf)
+    {
+      for (int i = 0; i < graf.length - 1; i++)
+      {
+        for (int j = i + 1; j < graf.length; j++)
+        {
+          if  (graf[i][0] > graf[j][0] ||
+                  (graf[i][0] == graf[j][0] && graf[i][1] > graf[j][1]))
+          {
+            int tmp0 = graf[i][0], tmp1 = graf[i][1];
+            graf[i][0] = graf[j][0];
+            graf[i][1] = graf[j][1];
+            graf[j][0] = tmp0;
+            graf[j][1] = tmp1;
+          }
+        }
+      }
     }
 
     /*
@@ -297,6 +670,25 @@ class Entrega {
       return generateRel(as, as, pred);
     }
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   /*
    * Aquí teniu els exercicis del Tema 3 (Grafs).
@@ -417,6 +809,24 @@ class Entrega {
     }
   }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   /*
    * Aquí teniu els exercicis del Tema 4 (Aritmètica).
    *
@@ -487,6 +897,23 @@ class Entrega {
       });
     }
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   /*
    * Aquest mètode `main` conté alguns exemples de paràmetres i dels resultats que haurien de donar
