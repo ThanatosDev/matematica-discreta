@@ -707,17 +707,112 @@ class Entrega {
     /*
      * Determinau si el graf `g` (no dirigit) té cicles.
      */
-    static boolean exercici1(int[][] g) {
-      throw new UnsupportedOperationException("pendent");
+    static boolean exercici1(int[][] g)
+    {
+        boolean[] visitat=new boolean[g.length];
+
+        for(int v=0; v<g.length; v++)
+        {
+          if(!visitat[v])
+          {
+            if(téCicle(g,v,-1,visitat))
+            {
+              return true;
+            }
+          }
+        }
+        return false;
+    }
+    static boolean téCicle(int[][] g, int v, int pare, boolean[] visitat)
+    {
+      visitat[v]=true;
+      for(int veí:g[v])
+      {
+        if(!visitat[veí])
+        {
+          if(téCicle(g,veí,v,visitat)) return true;
+        }
+        else if(veí!=pare)
+        {
+          //si el valor ja ha estat visitat i no és el pare, tenim un cicle
+          return true;
+        }
+      }
+      return false;
     }
 
     /*
      * Determinau si els dos grafs són isomorfs. Podeu suposar que cap dels dos té ordre major que
      * 10.
      */
-    static boolean exercici2(int[][] g1, int[][] g2) {
-      throw new UnsupportedOperationException("pendent");
+    static boolean exercici2(int[][] g1, int[][] g2)
+    {
+      int n=g1.length;
+      if(g2.length!=n) return false;
+
+      int[] perm=new int[n];
+      for(int i=0;i<n;i++) perm[i]=i;
+
+      do
+      {
+        if(isPermutacióIsoforma(g1,g2,perm)) return true;
+      }
+      while(nextPermutation(perm));
+
+      return false;
     }
+
+    static boolean isPermutacióIsoforma(int[][] g1, int[][] g2, int[] p)
+    {
+      int n = g1.length;
+
+      for (int i = 0; i < n; i++)
+      {
+        int[] veinsG1 = new int[g1[p[i]].length];
+        for (int j = 0; j < g1[p[i]].length; j++)
+        {
+          veinsG1[j] = pInverse(p, g1[p[i]][j]);
+        }
+
+        int[] veinsG2 = Arrays.copyOf(g2[i], g2[i].length);
+
+        Arrays.sort(veinsG1);
+        Arrays.sort(veinsG2);
+
+        if (!Arrays.equals(veinsG1, veinsG2)) return false;
+      }
+
+      return true;
+    }
+
+    static int pInverse(int[] p, int v)
+    {
+      for(int i=0;i<p.length;i++)
+      {
+        if(p[i]==v) return i;
+      }
+      throw new IllegalArgumentException("Valor no trobat en la permutació");
+    }
+
+    // Generador de permutacions lexicográfiqies
+    static boolean nextPermutation(int[] a)
+    {
+      int i=a.length-2;
+      while(i>=0 && a[i] >= a[i+1]) i--;
+      if(i<0) return false;
+
+      int j=a.length-1;
+      while(a[j] <= a[i]) j--;
+      int tmp=a[i]; a[i]=a[j]; a[j]=tmp;
+
+      for (int l = i + 1, r = a.length - 1; l < r; l++, r--)
+      {
+        tmp = a[l]; a[l] = a[r]; a[r] = tmp;
+      }
+      return true;
+    }
+
+
 
     /*
      * Determinau si el graf `g` (no dirigit) és un arbre. Si ho és, retornau el seu recorregut en
@@ -726,8 +821,36 @@ class Entrega {
      * En cas de ser un arbre, assumiu que l'ordre dels fills vé donat per l'array de veïns de cada
      * vèrtex.
      */
-    static int[] exercici3(int[][] g, int r) {
-      throw new UnsupportedOperationException("pendent");
+    static int[] exercici3(int[][] g, int r)
+    {
+      int n = g.length;
+      boolean [] visitat=new boolean[n];
+      if(téCicle(g,r,-1,visitat)) return null;
+
+      // comprobar si es conexo
+      for (boolean v : visitat) if (!v) return null;
+
+      // si es arbol hacer postorden
+      List<Integer> postordre=new ArrayList<>();
+      Arrays.fill(visitat,false);
+      dfsPostordre(g,r,-1,visitat,postordre);
+
+      // convertir a un array
+      int[] res=new int[postordre.size()];
+      for (int i = 0; i < res.length; i++) res[i] = postordre.get(i);
+      return res;
+    }
+    static void dfsPostordre(int[][] g, int v, int pare, boolean[] visitat, List<Integer> llista)
+    {
+      visitat[v] = true;
+      for (int veí : g[v])
+      {
+        if (veí != pare)
+        {
+          dfsPostordre(g, veí, v, visitat, llista);
+        }
+      }
+      llista.add(v);
     }
 
     /*
@@ -754,8 +877,58 @@ class Entrega {
      *
      * Si és impossible, retornau -1.
      */
-    static int exercici4(char[][] mapa) {
-      throw new UnsupportedOperationException("pendent");
+    static int exercici4(char[][] mapa)
+    {
+      int files=mapa.length;
+      int columnes=mapa[0].length;
+      boolean[][] visitat=new boolean[files][columnes];
+
+      int origenX=-1,origenY=-1;
+
+      // buscar 'O'
+      for (int i = 0; i < files; i++)
+      {
+        for (int j = 0; j < columnes; j++)
+        {
+          if (mapa[i][j] == 'O')
+          {
+            origenX=i;
+            origenY=j;
+            break;
+          }
+        }
+      }
+      if (origenX==-1 || origenY==-1) return -1; // No hay origen
+
+      // BFS
+      List<int[]> cua = new ArrayList<>();
+      cua.add(new int[]{origenX, origenY, 0});
+      visitat[origenX][origenY] = true;
+
+      int[] dx = {-1, 1, 0, 0}; // arriba, abajo, izquierda, derecha
+      int[] dy = {0, 0, -1, 1};
+
+      int index = 0;
+      while (index < cua.size())
+      {
+        int[] actual = cua.get(index++);
+        int x = actual[0], y = actual[1], passos = actual[2];
+
+        if (mapa[x][y] == 'D') return passos;
+
+        for (int d = 0; d < 4; d++)
+        {
+          int nx = x + dx[d], ny = y + dy[d];
+
+          if (nx >= 0 && ny >= 0 && nx < files && ny < columnes &&
+                  !visitat[nx][ny] && mapa[nx][ny] != '#')
+          {
+            visitat[nx][ny] = true;
+            cua.add(new int[]{nx, ny, passos + 1});
+          }
+        }
+      }
+      return -1;
     }
 
     /*
@@ -852,8 +1025,54 @@ class Entrega {
      *
      * Pista: https://en.wikipedia.org/wiki/Exponentiation_by_squaring
      */
-    static int[] exercici1(String msg, int n, int e) {
-      throw new UnsupportedOperationException("pendent");
+    static int[] exercici1(String msg, int n, int e)
+    {
+      byte[] bytes = msg.getBytes();
+      int[] result = new int[bytes.length / 2];
+
+      for (int i = 0; i < bytes.length; i += 2)
+      {
+        int a = bytes[i] & 0xFF;
+        int b = bytes[i + 1] & 0xFF;
+        int m = a * 256 + b;
+        result[i / 2] = modPow(m, e, n);
+      }
+
+      return result;
+    }
+    // Exponenciación rápida por cuadrados
+    static int modPow(int base, int exp, int mod)
+    {
+      int res = 1;
+      base = base % mod;
+
+      while (exp > 0)
+      {
+        if ((exp & 1) == 1)
+        {
+          res = modMult(res, base, mod);
+        }
+        base = modMult(base, base, mod);
+        exp >>= 1;
+      }
+
+      return res;
+    }
+    static int modMult(int a, int b, int mod)
+    {
+      int res = 0;
+      while (b > 0)
+      {
+        if ((b & 1) == 1)
+        {
+          res += a;
+          if (res >= mod) res -= mod;
+        }
+        a += a;
+        if (a >= mod) a -= mod;
+        b >>= 1;
+      }
+      return res;
     }
 
     /*
@@ -870,8 +1089,59 @@ class Entrega {
      * - La clau pública (n, e) és de la forma vista a les transparències.
      * - n és major que 2¹⁴, i n² és menor que Integer.MAX_VALUE
      */
-    static String exercici2(int[] m, int n, int e) {
-      throw new UnsupportedOperationException("pendent");
+    static String exercici2(int[] m, int n, int e)
+    {
+      // 1. Factorizar n
+      int p=0, q=0;
+      for (int i = 2; i*i <= n; i++)
+      {
+        if (n % i == 0)
+        {
+          p = i;
+          q = n/i;
+          break;
+        }
+      }
+
+      int phi = (p-1) * (q-1);
+      int d = modInverse(e,phi);
+
+      byte[] bytes=new byte[m.length*2];
+
+      for(int i=0; i<m.length; i++)
+      {
+        int mi=modPow(m[i],d,n);
+
+        bytes[i*2] = (byte) (mi/256);
+        bytes[i*2+1] = (byte) (mi % 256);
+      }
+
+      return new String(bytes);
+    }
+    // algoritme d'Euclides extés per trobar invers modular
+    static int modInverse(int a, int m)
+    {
+      int m0=m,t,q;
+      int x0=0, x1=1;
+
+      while(a>1)
+      {
+        q=a/m;
+        t=m;
+        m=a%m;
+        a=t;
+
+        t=x0;
+        x0=x1-q*x0;
+        x1=t;
+      }
+
+      if(x1<0)
+      {
+        x1+=m0;
+      }
+
+      return x1;
     }
 
     static void tests() {
